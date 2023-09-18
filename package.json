@@ -1,0 +1,20 @@
+{
+	"name": "@johnqian/barrage-plugin",
+	"version": "2.0.1",
+	"description": "canvas弹幕功能",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [
+		"弹幕",
+		"barrage",
+        "barrage-plugin"
+	],
+	"author": "johnqian",
+	"license": "ISC",
+	"files": [
+		"index.js",
+		"README.md"
+	]
+}

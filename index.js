@@ -1,0 +1,96 @@
+// 弹幕类
+class Danmu {
+    constructor(canvas, danmuList, text, options = {}) {
+        this.canvas = canvas
+        this.ctx = canvas.getContext('2d')
+        this.danmuList = danmuList
+        this.text = text
+        this.x = canvas.width
+        this.y = this.getAvailableTrack(options.trackHeight || 30)
+        this.speed = options.speed || 2
+        this.acceleration = options.acceleration || 0.01
+        this.color = options.color || 'white' // 添加颜色选项，默认为白色
+        this.fontSize = options.fontSize || '12px normal'
+
+    }
+
+    getAvailableTrack (trackHeight) {
+        const existingTracks = this.danmuList.map((danmu) => danmu.y)
+        let track = trackHeight
+
+        while (existingTracks.includes(track)) {
+            track += trackHeight
+        }
+
+        return track
+    }
+
+    update () {
+        this.x -= this.speed
+
+        // 使用缓动函数来计算速度变化
+        const progress = (this.canvas.width - this.x) / this.canvas.width
+        this.x -= this.easeInOutQuad(progress, 0, this.speed, 1)
+
+        return this.x < -this.ctx.measureText(this.text).width
+    }
+
+    easeInOutQuad (t, b, c, d) {
+        t /= d / 2
+        if (t < 1) return (c / 2) * t * t + b
+        t--
+        return (-c / 2) * (t * (t - 2) - 1) + b
+    }
+}
+
+// 弹幕管理类
+class DanmuManager {
+    constructor(canvas) {
+
+        const dpr = window.devicePixelRatio || 1 // 假设dpr为2
+        this.canvas = canvas
+        // 获取css的宽高
+        const { width: cssWidth, height: cssHeight } = this.canvas.getBoundingClientRect();
+        this.canvas.style.width = `${cssWidth}px`;
+        this.canvas.style.height = `${cssHeight}px`;
+        this.canvas.width = Math.round(dpr * cssWidth);
+        this.canvas.height = Math.round(dpr * cssHeight);
+
+        this.ctx = this.canvas.getContext('2d')
+        this.ctx.scale(dpr, dpr);
+        this.danmuList = []
+    }
+
+    addDanmu (text, options = {}) {
+        const danmu = new Danmu(this.canvas, this.danmuList, text, options)
+        this.danmuList.push(danmu)
+    }
+
+
+    draw () {
+
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+
+        for (let i = 0; i < this.danmuList.length; i++) {
+            const danmu = this.danmuList[i]
+            danmu.x -= danmu.speed
+
+            if (danmu.update()) {
+                this.danmuList.splice(i, 1)
+                i--
+            } else {
+                this.ctx.imageSmoothingEnabled = true; // 启用抗锯齿
+                this.ctx.font = danmu.fontSize
+                this.ctx.fillStyle = danmu.color // 设置弹幕颜色
+                this.ctx.fillText(danmu.text, danmu.x, danmu.y)
+            }
+        }
+
+        requestAnimationFrame(() => this.draw())
+    }
+}
+// 导出模块
+module.exports = {
+	Danmu,
+	DanmuManager,
+}
